@@ -38,7 +38,7 @@ public class Client implements Runnable {
     }
 
     public static void sendMessage(String s) throws BusException {
-        myInterface.Chat(s, nickname);
+        myInterface.Notification(s, nickname);
     }
 
     private static final short CONTACT_PORT = 27;
@@ -73,7 +73,7 @@ public class Client implements Runnable {
 
     public static class SampleSignalHandler implements ChatInterface, BusObject {
 
-        public void Chat(String s, String nickname) throws BusException {
+        public void Notification(String s, String nickname) throws BusException {
 
         }
 
@@ -95,19 +95,9 @@ public class Client implements Runnable {
 
     public static class SignalInterface {
 
-        @BusSignalHandler(iface = "org.alljoyn.bus.samples.chat", signal = "Chat")
-        public void Chat(String string, String nick) {
+        @BusSignalHandler(iface = "org.alljoyn.bus.samples.chat", signal = "Notification")
+        public void Notification(String string, String nick) {
 
-            /*
-             * See the long comment in doJoinSession() for more explanation of
-             * why this is needed.
-             * 
-             * The only time we allow a signal from the hosted session ID to pass
-             * through is if we are in mJoinedToSelf state.  If the source of the
-             * signal is us, we also filter out the signal since we are going to
-             * locally echo the signal.
-
-             */
             if (validate_copy) {
                 final String f = string;
                 String uniqueName = mBus.getUniqueName();

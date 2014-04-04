@@ -94,7 +94,7 @@ public static String s;
     }//GEN-LAST:event_jTextField1ActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        Service.read(jTextField1.getText());
+        Service.Set_Channle_Name(jTextField1.getText());
         this.dispose();
     }//GEN-LAST:event_jButton1ActionPerformed
 

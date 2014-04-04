@@ -20,7 +20,7 @@ public interface ChatInterface {
      * signals and not to receive signals.
      */
     @BusSignal
-    public void Chat(String str, String nickname) throws BusException;
+    public void Notification(String str, String nickname) throws BusException;
     @BusSignal
     public void nickname(String usrname , String all_unique)throws BusException;
     @BusSignal
