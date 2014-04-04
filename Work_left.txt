@@ -1,0 +1,8 @@
+Changes/Addition needed to be done
+ Refresh button for the channel list
+ Implement the leave/stop channel
+ Channel name validation - what if channel name already exists
+ key implementation - messages are to read only by those who have the key
+ The validation should to sent to the target device and not be broadcast
+ Message reply needs to be to the target device
+ ask key GUI implementation

@@ -27,6 +27,7 @@ public class Client implements Runnable {
         System.loadLibrary("alljoyn_java");
     }
 
+    //Used for replying to the call notifications
     public static void sendMessage(String s) throws BusException {
         myInterface.Notification(s, nickname);
     }
@@ -195,23 +196,49 @@ public class Client implements Runnable {
         channel_joined = 2;
     }
 
-    //This method run the code for the client side
+    /**This method run the code for the client side
+     * The process is a as follow:-
+     * Initially a Alljoyn busattachment object is initialized this object connects 
+     * to the Alljoyn bus daemon(it handles the data transfers). Next a buslistener
+     * object is initialized, this object listens for data on the channel and call 
+     * appropriate callback functions when there is any change on the channel.
+     * Now all the interface/handlers created are registered with the busattachment.
+     * The Signal/method interface and method handler are registered using 
+     * RegisterBusObject and Signal handler using the RegisterSignalHandler method.
+     * Now channel Discovery is initiated so for all the available channels buslistener
+     * object's foundAdvertisedname is called.
+     * All the found channels are stored in channels array. This array is passed onto 
+     * the Join channel GUI. The GUI returns the index of the selected channel.
+     * Once a channel is found joinChannel method is called, this method blocks 
+     * till the user has selected a channel
+     * After the user has joined a channel he/she is asked for a nickname. This 
+     * nickname is validated from the channel creator using the nickname and validate 
+     * methods in the interface. When the user sends a nick to server it checks whether
+     * or not the nick is used correspondingly it sends a true or false using the
+     * validate method.
+     * 
+     * After all this when call notification is send to the Desktop Notification
+     * method on the SignalHandler is called which sends the string to the gui for
+     * displaying the notification. When Reject call is pressed a string "bomb"
+     * is sent back to device which sent the notification.
+     * 
+    */
     public static void run_client() throws BusException, InterruptedException {
         channels = new String[100];
         channel_count=0;
         channel_selected=-1;
         myInterface=null;
         mGroupInterface=null;
-        mySignalInterface = new SignalInterface();
+        
         class MyBusListener extends BusListener {
-
+            //This method is called whenever the listener discovers a new channel on the network
             public void foundAdvertisedName(String name, short transport, String namePrefix) {
                 System.out.println(String.format("BusListener.foundAdvertisedName(%s, %d, %s)", name, transport, namePrefix));
                 channels[channel_count] = name.substring(29);
                 channel_count++;
                 channel_detected = 1;
             }
-
+            
             public void nameOwnerChanged(String busName, String previousOwner, String newOwner) {
                 if ("com.my.well.known.name".equals(busName)) {
                     System.out.println("BusAttachement.nameOwnerChagned(" + busName + ", " + previousOwner + ", " + newOwner);
@@ -231,7 +258,7 @@ public class Client implements Runnable {
         }
         System.out.println("BusAttachment.connect successful");
 
-        
+        mySignalInterface = new SignalInterface();
         status = mBus.registerBusObject(mySignalInterface, "/chatService");
         status = mBus.findAdvertisedName(NAME_PREFIX);
         if (status != Status.OK) {
@@ -299,8 +326,8 @@ public class Client implements Runnable {
         for (int i = 0; i < 10; i++) {
             System.out.println(uni_names[i] + " - " + nick[i]);
         }
+        //This is for the client to run infinetly 
         while (true) {
-            //myInterface.Chat(s,nickname);
             Thread.sleep(5000);
         }
     }
@@ -310,6 +337,7 @@ public class Client implements Runnable {
     }
 }
 
+//This class creates a new thread on which a new jFrame is created for displaying the incoming notification
 class messageThread extends Thread {
 
     final String f;

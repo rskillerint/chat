@@ -182,7 +182,16 @@ public class Service {
         channel_name = text;
     }
 
-    //Static method which runs the Service or Channel Creator
+    /**Static method which runs the Service or Channel Creator
+     * The initial flow is same a client, so please refer to the long comment in the
+     * client code.
+     * The differences are
+     * The server's creator needs no validation of his/her chosen nickname.
+     * The device's port is required to be binded now(explained above bindSessionPort)
+     * The channel name selected is first requested if request is successful i.e.
+     * channel name does not exist, the name is granted.
+     * Now the server waits for a device to be connected.
+     */
     public static void run_service() throws BusException {
         
         //Initializing all the nicknames
@@ -246,6 +255,8 @@ public class Service {
         sessionOpts.proximity = SessionOpts.PROXIMITY_ANY;
         sessionOpts.transports = SessionOpts.TRANSPORT_ANY;
 
+        // This binds the port of the device with alljoyn bus whenver a device tries 
+        //to join the channel appropriate methods are called
         status = mBus.bindSessionPort(contactPort, sessionOpts,
                 new SessionPortListener() {
                     public boolean acceptSessionJoiner(short sessionPort, String joiner, SessionOpts sessionOpts) {
@@ -310,6 +321,8 @@ public class Service {
 
             }
             System.out.println("Server running");
+            
+            //This is for the client to run infinetly
             while (true) {
 
                 Thread.sleep(50000);
