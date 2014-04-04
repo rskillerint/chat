@@ -1,17 +1,10 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package org.alljoyn.bus.sample.chat;
 
 /**
  *
- * @author admin
+ * @author Shashank
  */
-import static com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type.Int;
-import javax.swing.JLabel;
-import javax.swing.WindowConstants;
 
 import org.alljoyn.bus.BusAttachment;
 import org.alljoyn.bus.BusException;
@@ -24,11 +17,8 @@ import org.alljoyn.bus.Status;
 import org.alljoyn.bus.annotation.BusSignalHandler;
 import org.alljoyn.bus.MessageContext;
 import org.alljoyn.bus.SignalEmitter;
-import java.lang.Runnable;
 
 import java.util.Scanner;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.alljoyn.bus.ProxyBusObject;
 
 public class Client implements Runnable {
@@ -41,73 +31,85 @@ public class Client implements Runnable {
         myInterface.Notification(s, nickname);
     }
 
+    ///Start of variable declarations
+    //////Variables realted to alljoyn connection establishment
     private static final short CONTACT_PORT = 27;
     private static double key = (Math.random() * 100000);
     static BusAttachment mBus;
-    static int flag = -1;
-    static int flag2 = 0;
     static int mHostSessionId = -1;
     static int mUseSessionId = -1;
-    static String s = "hello";
     private static final String NAME_PREFIX = "org.alljoyn.bus.samples.chat";
-
-    private static String[] channels;
+    //////Variables realted to alljoyn connection establishment
+    
+    static int channel_joined = -1;
+    static int channel_detected = -1;
+    
+    private static String[] channels;               //Array for storing all the visible Alljoyn Channel
     private static int channel_count = 0;
     private static int channel_selected = -1;
-    private static double[] keys = new double[100];
+    private static double[] keys = new double[100]; //Array for storing all the keys that the device received
     private static int key_count = 0;
-    private static String nickname = "saurabh";
-    private static String alljoynnick;
-    private static boolean validate = false;
+    private static String nickname ;                //Device nickname that the user has chosen
+    private static String alljoynnick;              //Device nickanem that Alljoyn provides
+    
+    //We can change to a single variable wait for android implementation to be complete
+    private static boolean validate = false;        
     private static boolean validate_copy = false;
+    //         
+    ///Variables for the various interfaces used for data transfer 
     static ChatInterface myInterface = null;
-    static SampleSignalHandler mySignalInterface;
+    static SignalInterface mySignalInterface;
     private static ProxyBusObject mProxyObj;
     private static GroupInterface mGroupInterface;
-    static groupSignalHandler myGroup = new groupSignalHandler();
-
+    static Methodhandler myGroup = new Methodhandler();
+    
+    ///End of variable Declarations
+    
     @Override
     public void run() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-
-    public static class SampleSignalHandler implements ChatInterface, BusObject {
-
+    
+    // The signal interface is used to send data using alljoyn's signals
+    public static class SignalInterface implements ChatInterface, BusObject {
+        //Signal via which all the notifications are to be sent
         public void Notification(String s, String nickname) throws BusException {
 
         }
-
+        //Signal via which all the nickname of new users are to be sent
         @Override
         public void nickname(String usrname, String all_unique) throws BusException {
 
         }
-
+        //Signal via which the Service/Channel creator validates a new users nickname
         @Override
         public void validate(boolean val) throws BusException {
 
         }
-
+        //Signal via which users can send their private keys to other devices, thus enabling them to receive their notifications
         @Override
         public void sendKey(Double a) throws BusException {
 
         }
     }
 
-    public static class SignalInterface {
+    //The signal handler reads the signals sent to the device by other devices
+    public static class Signalhandler {
 
         @BusSignalHandler(iface = "org.alljoyn.bus.samples.chat", signal = "Notification")
         public void Notification(String string, String nick) {
 
             if (validate_copy) {
                 final String f = string;
-                String uniqueName = mBus.getUniqueName();
                 MessageContext ctx = mBus.getMessageContext();
 
+                String as = nick + " -> " + string;
+                new messageThread(as).start();
+                
+                //For Debugging purpose
                 String nickname = ctx.sender;
                 nickname = nickname.substring(nickname.length() - 10, nickname.length());
                 System.out.println(nickname + ": " + string);
-                String as = nick + " -> " + string;
-                new messageThread(as).start();
             }
 
         }
@@ -128,8 +130,10 @@ public class Client implements Runnable {
         }
     }
 
-    public static class groupSignalHandler implements GroupInterface, BusObject {
-
+    //The MethodHandler provides implemention for the GroupInterface which contains declarations for alljoyn methods
+    public static class Methodhandler implements GroupInterface, BusObject {
+        
+        // Here only askKey is implemented as Client does not have the member list
         public synchronized double askKey() {
             return key;
         }
@@ -143,7 +147,9 @@ public class Client implements Runnable {
         }
 
     }
-
+    
+    //The joinChannel GUI calls this method to specify which of the available channels the user selected
+    ///////There should be changes here if the GUI validates the usrs input first before passing it on to the back end
     public static void getChannelName(int i) {
         channel_selected = i;
         System.out.println("the channel id is: " + i);
@@ -152,6 +158,8 @@ public class Client implements Runnable {
         }
     }
 
+    //This method joins the channel selected by the user
+    ///////There should be changes here if the GUI validates the usrs input first before passing it on to the back end
     public static void joinChannel() {
         SessionOpts sessionOpts = new SessionOpts(SessionOpts.TRAFFIC_MESSAGES, true, SessionOpts.PROXIMITY_ANY, SessionOpts.TRANSPORT_ANY);
 
@@ -162,7 +170,7 @@ public class Client implements Runnable {
         short contactPort = CONTACT_PORT;
         while (channel_selected == -1) {
             try {
-                Thread.sleep(500);
+                Thread.sleep(100);
             } catch (InterruptedException e) {
                 System.out.println("Program interupted");
             }
@@ -184,23 +192,24 @@ public class Client implements Runnable {
         mProxyObj = mBus.getProxyBusObject(NAME_PREFIX+"."+name, "/chatService", sessionId.value, new Class<?>[]{GroupInterface.class});
         mGroupInterface = mProxyObj.getInterface(GroupInterface.class);
 
-        flag = 2;
+        channel_joined = 2;
     }
 
+    //This method run the code for the client side
     public static void run_client() throws BusException, InterruptedException {
         channels = new String[100];
         channel_count=0;
         channel_selected=-1;
         myInterface=null;
         mGroupInterface=null;
-        mySignalInterface = new SampleSignalHandler();
+        mySignalInterface = new SignalInterface();
         class MyBusListener extends BusListener {
 
             public void foundAdvertisedName(String name, short transport, String namePrefix) {
                 System.out.println(String.format("BusListener.foundAdvertisedName(%s, %d, %s)", name, transport, namePrefix));
                 channels[channel_count] = name.substring(29);
                 channel_count++;
-                flag2 = 1;
+                channel_detected = 1;
             }
 
             public void nameOwnerChanged(String busName, String previousOwner, String newOwner) {
@@ -222,9 +231,7 @@ public class Client implements Runnable {
         }
         System.out.println("BusAttachment.connect successful");
 
-        //change made here
-        //status = mBus.addMatch("type='signal'");
-        //
+        
         status = mBus.registerBusObject(mySignalInterface, "/chatService");
         status = mBus.findAdvertisedName(NAME_PREFIX);
         if (status != Status.OK) {
@@ -232,7 +239,7 @@ public class Client implements Runnable {
         }
 
         System.out.println("BusAttachment.findAdvertisedName successful " + "com.my.well.known.name");
-        SignalInterface mySignalHandlers = new SignalInterface();
+        Signalhandler mySignalHandlers = new Signalhandler();
 
         status = mBus.registerSignalHandlers(mySignalHandlers);
         if (status != Status.OK) {
@@ -241,7 +248,7 @@ public class Client implements Runnable {
 
         System.out.println("BusAttachment.registerSignalHandlers successful");
 
-        groupSignalHandler mySampleService = new groupSignalHandler();
+        Methodhandler mySampleService = new Methodhandler();
 
         status = mBus.registerBusObject(mySampleService, "/chatService");
         if (status != Status.OK) {
@@ -249,7 +256,7 @@ public class Client implements Runnable {
         }
         System.out.println("Method handler Registered");
 
-        while (flag2 != 1) {
+        while (channel_detected != 1) {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
@@ -266,7 +273,7 @@ public class Client implements Runnable {
         if (channel_selected == -2) {
             return;
         }
-        while (flag != 2) {
+        while (channel_joined != 2) {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {

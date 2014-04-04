@@ -13,6 +13,10 @@
  *    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  *    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+/*
+Author Shashank
+*/
 package org.alljoyn.bus.sample.chat;
 
 import java.util.Scanner;
@@ -40,11 +44,15 @@ public class Service {
     }
 
     // Start of variable Declarations
+        //Variables related to alljoyn session establishemnt
+    static boolean mSessionEstablished = false;
+    static int mSessionId;
+    static String mJoinerName;
     private static final String NAME_PREFIX = "org.alljoyn.bus.samples.chat";
     private static final short CONTACT_PORT = 27;
     private static BusAttachment mBus;
     static int mUseSessionId = -1;
-    private static double key = (Math.random() * 100000);
+    private static double key = (Math.random() * 100000);         //Generating random secret key for the device
    
     private static String[] Alljoyn_unique_name = new String[100];//stores the nicknames provided to devices by alljoyn
     static String[] nickname = new String[100];                   //stores the nicknames chosen by the user
@@ -53,10 +61,6 @@ public class Service {
     private static double[] keys = new double[100];               //stores the all the keys it has recieved
     private static int key_count = 0;
     
-    //Variables related to alljoyn session establishemnt
-    static boolean mSessionEstablished = false;
-    static int mSessionId;
-    static String mJoinerName;
     static ChatInterface myInterface = null;
     static String channel_name = null;
     //End of Variable Declarations
@@ -89,10 +93,8 @@ public class Service {
         @BusSignalHandler(iface = "org.alljoyn.bus.samples.chat", signal = "Notification")
         public void Notification(String string, String nick) {
 
-            String uniqueName = mBus.getUniqueName();
             MessageContext ctx = mBus.getMessageContext();
 
-            
             String as = nick + " -> " + string;
             new messageTh(as).start();
             
